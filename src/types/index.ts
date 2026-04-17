@@ -43,4 +43,4 @@ export interface DailyEntry {
   updatedAt: string
 }
 
-export type ViewType = 'reflection' | 'dashboard' | 'history'
+export type ViewType = 'reflection' | 'dashboard' | 'history' | 'profile'

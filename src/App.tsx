@@ -1,42 +1,44 @@
 import { useState, useCallback } from 'react'
-import { Sun, Moon, LogOut, Bell, BellOff } from 'lucide-react'
 import { ViewType, DailyEntry } from './types'
 import useStorage from './hooks/useStorage'
 import useAuth from './hooks/useAuth'
+import useProfile from './hooks/useProfile'
 import { useThemeStore } from './store/themeStore'
 import { todayStr } from './utils/dateUtils'
-import { setupNotifications } from './lib/messaging'
 import Navigation from './components/Navigation'
 import DailyReflection from './components/DailyReflection'
 import Dashboard from './components/Dashboard'
 import HistoryList from './components/HistoryList'
+import Profile from './components/Profile'
 import AuthGate from './components/AuthGate'
 
 const App = () => {
   const { theme, toggleTheme } = useThemeStore()
   const { user, loading, signInWithGoogle, signOut } = useAuth()
-  const [view, setView] = useState<ViewType>('reflection')
+  const [view, setView] = useState<ViewType>(() => {
+    const saved = localStorage.getItem('lastView')
+    if (saved === 'reflection' || saved === 'dashboard' || saved === 'history' || saved === 'profile') return saved
+    return 'reflection'
+  })
   const [viewingDate, setViewingDate] = useState<string>(todayStr())
   const { entries, saveEntry, getByDate, syncing } = useStorage(user?.uid)
-  const notifPermission = () => Notification.permission as string
-  const [notifEnabled, setNotifEnabled] = useState(() => notifPermission() === 'granted')
+  const { profile, saveProfile, saving } = useProfile(user?.uid)
 
   const currentEntry = getByDate(viewingDate)
-
-  const handleNotifToggle = useCallback(async () => {
-    if (!user) return
-    if (notifPermission() === 'granted') return
-    await setupNotifications(user.uid)
-    setNotifEnabled(notifPermission() === 'granted')
-  }, [user])
 
   const handleViewChange = useCallback((v: ViewType) => {
     if (v === 'reflection') setViewingDate(todayStr())
     setView(v)
+    localStorage.setItem('lastView', v)
   }, [])
 
   const handleEntryClick = useCallback((entry: DailyEntry) => {
     setViewingDate(entry.date)
+    setView('reflection')
+  }, [])
+
+  const handleDateSelect = useCallback((dateStr: string) => {
+    setViewingDate(dateStr)
     setView('reflection')
   }, [])
 
@@ -62,52 +64,6 @@ const App = () => {
         <div className="fixed top-0 left-0 right-0 h-0.5 bg-violet-500 animate-pulse z-50" />
       )}
 
-      {/* 右上角工具列 — 加 pt-safe 避免與狀態列重疊 */}
-      <div className="fixed top-0 right-4 z-40 pt-safe">
-        <div className="flex items-center gap-2 py-2">
-          {/* 通知開關 */}
-          <button
-            onClick={handleNotifToggle}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors"
-            title={notifEnabled ? '通知已開啟' : '開啟每日提醒'}
-          >
-            {notifEnabled
-              ? <Bell className="w-4 h-4 text-violet-500" />
-              : <BellOff className="w-4 h-4" />
-            }
-          </button>
-
-          {/* 主題切換 */}
-          <button
-            onClick={toggleTheme}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors"
-            title={theme === 'dark' ? '切換淺色模式' : '切換深色模式'}
-          >
-            {theme === 'dark'
-              ? <Sun className="w-4 h-4" />
-              : <Moon className="w-4 h-4" />
-            }
-          </button>
-
-          {/* 使用者 + 登出 */}
-          <div className="flex items-center gap-1.5">
-            <span
-              className="w-7 h-7 rounded-full bg-violet-100 dark:bg-violet-900 border border-violet-300 dark:border-violet-700 flex items-center justify-center text-xs text-violet-700 dark:text-violet-300 font-bold cursor-default"
-              title={user.email ?? ''}
-            >
-              {user.email?.[0]?.toUpperCase() ?? 'A'}
-            </span>
-            <button
-              onClick={signOut}
-              className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 dark:text-slate-600 hover:text-gray-600 dark:hover:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
-              title="登出"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-      </div>
-
       <div className="overflow-y-auto pt-safe">
         {view === 'reflection' && (
           <DailyReflection
@@ -119,11 +75,29 @@ const App = () => {
         )}
         {view === 'dashboard' && <Dashboard entries={entries} />}
         {view === 'history' && (
-          <HistoryList entries={entries} onEntryClick={handleEntryClick} />
+          <HistoryList entries={entries} onEntryClick={handleEntryClick} onDateSelect={handleDateSelect} />
+        )}
+        {view === 'profile' && (
+          <Profile
+            userEmail={user.email}
+            profile={profile}
+            saving={saving}
+            onSave={saveProfile}
+            onSignOut={signOut}
+          />
         )}
       </div>
 
-      <Navigation view={view} onViewChange={handleViewChange} />
+      <Navigation
+        view={view}
+        onViewChange={handleViewChange}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        userEmail={user.email}
+        photoDataUrl={profile.photoDataUrl}
+        photoPosition={profile.photoPosition}
+        displayName={profile.displayName}
+      />
     </div>
   )
 }

@@ -10,7 +10,7 @@ import { zhTW } from 'date-fns/locale'
 export const todayStr = (): string => format(new Date(), 'yyyy-MM-dd')
 
 export const formatDisplay = (dateStr: string): string =>
-  format(parseISO(dateStr), 'M月d日 EEEE', { locale: zhTW })
+  format(parseISO(dateStr), 'yyyy年M月d日 EEEE', { locale: zhTW })
 
 export const formatShort = (dateStr: string): string =>
   format(parseISO(dateStr), 'M/d')

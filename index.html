@@ -9,12 +9,21 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="DODOHabit" />
     <title>DODOHabit</title>
+    <style>
+      /* 預設深色背景，在 JS / CSS bundle 載入前防止白色閃爍 */
+      html { background-color: #09090f; }
+    </style>
     <script>
       (function () {
         try {
           const raw = localStorage.getItem('dodo_theme')
           const theme = raw ? JSON.parse(raw).state?.theme : null
-          if (theme !== 'light') document.documentElement.classList.add('dark')
+          if (theme === 'light') {
+            document.documentElement.classList.remove('dark')
+            document.documentElement.style.backgroundColor = '#f9fafb'
+          } else {
+            document.documentElement.classList.add('dark')
+          }
         } catch {
           document.documentElement.classList.add('dark')
         }

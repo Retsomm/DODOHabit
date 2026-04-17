@@ -1,9 +1,15 @@
-import { Feather, Activity, Clock } from 'lucide-react'
+import { Feather, Activity, Clock, Sun, Moon } from 'lucide-react'
 import { ViewType } from '../types'
 
 interface Props {
   view: ViewType
   onViewChange: (v: ViewType) => void
+  theme: 'dark' | 'light'
+  onToggleTheme: () => void
+  userEmail: string | null
+  photoDataUrl: string
+  photoPosition: { x: number; y: number }
+  displayName: string
 }
 
 const TABS: { key: ViewType; label: string; Icon: React.ElementType }[] = [
@@ -12,25 +18,65 @@ const TABS: { key: ViewType; label: string; Icon: React.ElementType }[] = [
   { key: 'history', label: '歷史記錄', Icon: Clock },
 ]
 
-const Navigation = ({ view, onViewChange }: Props) => (
-  <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-space-900/95 backdrop-blur-sm border-t border-gray-200 dark:border-violet-900/30 pb-safe">
-    <div className="flex max-w-lg mx-auto">
-      {TABS.map(({ key, label, Icon }) => (
+const Navigation = ({ view, onViewChange, theme, onToggleTheme, userEmail, photoDataUrl, photoPosition, displayName }: Props) => {
+  const initial = (displayName || userEmail || 'A')[0].toUpperCase()
+
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-space-900/95 backdrop-blur-sm border-t border-gray-200 dark:border-violet-900/30 pb-safe">
+      <div className="flex max-w-lg mx-auto">
+        {/* 三個導覽分頁 */}
+        {TABS.map(({ key, label, Icon }) => (
+          <button
+            key={key}
+            onClick={() => onViewChange(key)}
+            className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${
+              view === key
+                ? 'text-violet-600 dark:text-violet-400'
+                : 'text-gray-400 dark:text-slate-600 hover:text-gray-600 dark:hover:text-slate-400'
+            }`}
+          >
+            <Icon className="w-5 h-5" strokeWidth={view === key ? 2.5 : 1.8} />
+            <span className="text-[10px] font-medium tracking-wide hidden xs:block sm:block">{label}</span>
+          </button>
+        ))}
+
+        {/* 主題切換 */}
         <button
-          key={key}
-          onClick={() => onViewChange(key)}
+          onClick={onToggleTheme}
+          className="flex-1 py-3 flex flex-col items-center gap-1 text-gray-400 dark:text-slate-600 hover:text-gray-600 dark:hover:text-slate-400 transition-colors"
+          title={theme === 'dark' ? '切換淺色模式' : '切換深色模式'}
+        >
+          {theme === 'dark'
+            ? <Sun className="w-5 h-5" strokeWidth={1.8} />
+            : <Moon className="w-5 h-5" strokeWidth={1.8} />
+          }
+          <span className="text-[10px] font-medium tracking-wide hidden xs:block sm:block">外觀</span>
+        </button>
+
+        {/* 帳號 / 頭像 */}
+        <button
+          onClick={() => onViewChange('profile')}
           className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${
-            view === key
+            view === 'profile'
               ? 'text-violet-600 dark:text-violet-400'
               : 'text-gray-400 dark:text-slate-600 hover:text-gray-600 dark:hover:text-slate-400'
           }`}
         >
-          <Icon className="w-5 h-5" strokeWidth={view === key ? 2.5 : 1.8} />
-          <span className="text-xs font-medium tracking-wide">{label}</span>
+          <span className={`w-5 h-5 rounded-full overflow-hidden flex items-center justify-center text-[10px] font-bold border ${
+            view === 'profile'
+              ? 'border-violet-400 dark:border-violet-500'
+              : 'border-gray-300 dark:border-slate-600'
+          } bg-violet-100 dark:bg-violet-900 text-violet-700 dark:text-violet-300`}>
+            {photoDataUrl
+              ? <img src={photoDataUrl} alt="avatar" className="w-full h-full object-cover" style={{ objectPosition: `${photoPosition.x}% ${photoPosition.y}%` }} />
+              : initial
+            }
+          </span>
+          <span className="text-[10px] font-medium tracking-wide hidden xs:block sm:block">帳號</span>
         </button>
-      ))}
-    </div>
-  </nav>
-)
+      </div>
+    </nav>
+  )
+}
 
 export default Navigation

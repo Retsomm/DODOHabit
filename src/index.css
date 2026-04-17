@@ -26,6 +26,11 @@
     padding-top: env(safe-area-inset-top, 0px);
   }
 
+  /* safe-area + 工具列高度（py-2 × 2 + h-8 = 48px） */
+  .pt-toolbar {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 56px);
+  }
+
   .pb-safe {
     padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
   }
