@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Zap, Eye, TestTube2, Layers, ChevronLeft, Check, Save } from 'lucide-react'
 import { DailyEntry, BitternessSource } from '../types'
 import { todayStr, formatDisplay } from '../utils/dateUtils'
 
@@ -22,7 +23,7 @@ const makeDefault = (date: string): DailyEntry => ({
   experiment: { whatFailed: '', dataLearned: '' },
   dikw: {
     situation: '', task: '', action: '', result: '',
-    controllable: '', uncontrollable: '', wisdomAction: ''
+    controllable: '', uncontrollable: '', wisdomAction: '',
   },
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
@@ -42,21 +43,34 @@ const ScoreBtn = ({
   <button
     type="button"
     onClick={onClick}
-    className={`w-9 h-9 rounded-full font-bold text-sm transition-all border-2 ${
+    className={`w-10 h-10 rounded-full font-bold text-base transition-all border-2 ${
       selected
         ? color === 'violet'
-          ? 'bg-violet-600 border-violet-400 text-white scale-110 shadow-lg shadow-violet-900/50'
-          : 'bg-amber-600 border-amber-400 text-white scale-110 shadow-lg shadow-amber-900/50'
-        : 'bg-space-950 border-slate-700 text-slate-500 hover:border-slate-500'
+          ? 'bg-violet-600 border-violet-500 text-white scale-110 shadow-lg shadow-violet-200 dark:shadow-violet-900/50'
+          : 'bg-amber-500 border-amber-400 text-white scale-110 shadow-lg shadow-amber-200 dark:shadow-amber-900/50'
+        : 'bg-gray-100 dark:bg-space-950 border-gray-300 dark:border-slate-700 text-gray-400 dark:text-slate-500 hover:border-gray-400 dark:hover:border-slate-500'
     }`}
   >
     {value}
   </button>
 )
 
-const Card = ({ title, children }: { title: string; children: React.ReactNode }) => (
-  <div className="bg-space-800 rounded-2xl p-5 space-y-4 border border-slate-800/60">
-    <h3 className="text-xs font-semibold text-violet-400 uppercase tracking-widest">{title}</h3>
+const Card = ({
+  icon,
+  title,
+  children,
+}: {
+  icon: React.ReactNode
+  title: string
+  children: React.ReactNode
+}) => (
+  <div className="bg-white dark:bg-space-800 rounded-2xl p-5 space-y-4 border border-gray-200 dark:border-slate-700/50">
+    <div className="flex items-center gap-2.5">
+      {icon}
+      <h3 className="text-sm font-bold text-violet-600 dark:text-violet-400 uppercase tracking-widest">
+        {title}
+      </h3>
+    </div>
     {children}
   </div>
 )
@@ -74,14 +88,14 @@ const Field = ({
   placeholder?: string
   rows?: number
 }) => (
-  <div className="space-y-1.5">
-    <label className="text-sm text-slate-400">{label}</label>
+  <div className="space-y-2">
+    <label className="text-base font-medium text-gray-700 dark:text-slate-300">{label}</label>
     <textarea
       value={value}
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
       rows={rows}
-      className="w-full bg-space-950 border border-slate-700/80 rounded-xl px-3 py-2.5 text-sm text-slate-200 placeholder-slate-700 focus:outline-none focus:border-violet-500/70 resize-none transition-colors"
+      className="w-full bg-gray-50 dark:bg-space-950 border border-gray-300 dark:border-slate-600/60 rounded-xl px-3.5 py-3 text-base text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-600 focus:outline-none focus:border-violet-500 dark:focus:border-violet-500/70 resize-none transition-colors"
     />
   </div>
 )
@@ -90,7 +104,7 @@ const BITTERNESS_OPTS: { value: BitternessSource; label: string }[] = [
   { value: 'self-initiated', label: '主動發起' },
   { value: 'over-working', label: '過度勞動' },
   { value: 'both', label: '兩者都有' },
-  { value: 'none', label: '沒有苦澀 ✓' },
+  { value: 'none', label: '沒有苦澀' },
 ]
 
 const DailyReflection = ({ viewDate, existingEntry, onSave, onBack }: Props) => {
@@ -108,17 +122,17 @@ const DailyReflection = ({ viewDate, existingEntry, onSave, onBack }: Props) => 
 
   const energyScore = entry.successScore - entry.bitternessScore
   const energyLabel =
-    energyScore >= 3 ? '🌟 能量充沛'
-    : energyScore >= 1 ? '💚 狀態不錯'
-    : energyScore === 0 ? '⚖️ 能量平衡'
-    : energyScore >= -2 ? '⚠️ 注意苦澀'
-    : '🔴 需要休息'
+    energyScore >= 3 ? '能量充沛'
+    : energyScore >= 1 ? '狀態不錯'
+    : energyScore === 0 ? '能量平衡'
+    : energyScore >= -2 ? '注意苦澀'
+    : '需要休息'
   const energyColor =
-    energyScore >= 3 ? 'text-emerald-400'
-    : energyScore >= 1 ? 'text-teal-400'
-    : energyScore === 0 ? 'text-blue-400'
-    : energyScore >= -2 ? 'text-amber-400'
-    : 'text-red-400'
+    energyScore >= 3 ? 'text-emerald-600 dark:text-emerald-400'
+    : energyScore >= 1 ? 'text-teal-600 dark:text-teal-400'
+    : energyScore === 0 ? 'text-blue-600 dark:text-blue-400'
+    : energyScore >= -2 ? 'text-amber-600 dark:text-amber-400'
+    : 'text-red-600 dark:text-red-400'
 
   const handleSave = () => {
     onSave(entry)
@@ -131,30 +145,36 @@ const DailyReflection = ({ viewDate, existingEntry, onSave, onBack }: Props) => 
       {!isToday && onBack && (
         <button
           onClick={onBack}
-          className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-300 transition-colors -mb-1"
+          className="flex items-center gap-1.5 text-base text-gray-400 dark:text-slate-500 hover:text-gray-700 dark:hover:text-slate-300 transition-colors -mb-1"
         >
-          <span>←</span> 返回歷史記錄
+          <ChevronLeft className="w-4 h-4" />
+          返回歷史記錄
         </button>
       )}
 
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-xl font-bold text-slate-100">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">
             {isToday ? '今日復盤' : '過去記錄'}
           </h1>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <p className="text-base text-gray-500 dark:text-slate-400 mt-0.5">
             {formatDisplay(viewDate)}
-            {!isToday && <span className="text-amber-600 text-xs ml-2">（編輯模式）</span>}
+            {!isToday && (
+              <span className="text-amber-600 dark:text-amber-500 text-sm ml-2">（編輯模式）</span>
+            )}
           </p>
         </div>
-        <span className={`text-sm font-medium mt-1 ${energyColor}`}>{energyLabel}</span>
+        <span className={`text-base font-semibold mt-1 ${energyColor}`}>{energyLabel}</span>
       </div>
 
       {/* ⚡ 能量場覺察 */}
-      <Card title="⚡ 能量場覺察">
+      <Card
+        icon={<Zap className="w-4 h-4 text-violet-500 dark:text-violet-400" />}
+        title="能量場覺察"
+      >
         <div className="grid grid-cols-2 gap-5">
-          <div className="space-y-2">
-            <label className="text-sm text-slate-400">成功感</label>
+          <div className="space-y-2.5">
+            <label className="text-base font-medium text-gray-700 dark:text-slate-300">成功感</label>
             <div className="flex gap-1.5">
               {[1, 2, 3, 4, 5].map(v => (
                 <ScoreBtn
@@ -167,8 +187,8 @@ const DailyReflection = ({ viewDate, existingEntry, onSave, onBack }: Props) => 
               ))}
             </div>
           </div>
-          <div className="space-y-2">
-            <label className="text-sm text-slate-400">苦澀感</label>
+          <div className="space-y-2.5">
+            <label className="text-base font-medium text-gray-700 dark:text-slate-300">苦澀感</label>
             <div className="flex gap-1.5">
               {[1, 2, 3, 4, 5].map(v => (
                 <ScoreBtn
@@ -190,18 +210,18 @@ const DailyReflection = ({ viewDate, existingEntry, onSave, onBack }: Props) => 
           placeholder="描述那個被看見、被認可的瞬間..."
         />
 
-        <div className="space-y-2">
-          <label className="text-sm text-slate-400">苦澀來自於？</label>
+        <div className="space-y-2.5">
+          <label className="text-base font-medium text-gray-700 dark:text-slate-300">苦澀來自於？</label>
           <div className="grid grid-cols-2 gap-2">
             {BITTERNESS_OPTS.map(opt => (
               <button
                 key={opt.value}
                 type="button"
                 onClick={() => up({ bitternessSource: opt.value })}
-                className={`py-2 px-3 rounded-xl text-sm font-medium transition-all border ${
+                className={`py-2.5 px-3 rounded-xl text-base font-medium transition-all border ${
                   entry.bitternessSource === opt.value
-                    ? 'bg-amber-900/40 border-amber-600/70 text-amber-300'
-                    : 'bg-space-950 border-slate-700/80 text-slate-500 hover:border-slate-500'
+                    ? 'bg-amber-50 dark:bg-amber-900/40 border-amber-400 dark:border-amber-600/70 text-amber-700 dark:text-amber-300'
+                    : 'bg-gray-50 dark:bg-space-950 border-gray-300 dark:border-slate-700/80 text-gray-500 dark:text-slate-400 hover:border-gray-400 dark:hover:border-slate-500'
                 }`}
               >
                 {opt.label}
@@ -220,9 +240,14 @@ const DailyReflection = ({ viewDate, existingEntry, onSave, onBack }: Props) => 
       </Card>
 
       {/* 🔮 脾臟直覺 */}
-      <Card title="🔮 脾臟直覺回顧">
-        <div className="space-y-2">
-          <label className="text-sm text-slate-400">今天有出現第一秒直覺嗎？</label>
+      <Card
+        icon={<Eye className="w-4 h-4 text-violet-500 dark:text-violet-400" />}
+        title="脾臟直覺回顧"
+      >
+        <div className="space-y-2.5">
+          <label className="text-base font-medium text-gray-700 dark:text-slate-300">
+            今天有出現第一秒直覺嗎？
+          </label>
           <div className="flex gap-2">
             {[
               { v: true, l: '有' },
@@ -232,10 +257,10 @@ const DailyReflection = ({ viewDate, existingEntry, onSave, onBack }: Props) => 
                 key={String(opt.v)}
                 type="button"
                 onClick={() => up({ splenic: { ...entry.splenic, hadIntuition: opt.v } })}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all border ${
+                className={`flex-1 py-3 rounded-xl text-base font-medium transition-all border ${
                   entry.splenic.hadIntuition === opt.v
-                    ? 'bg-violet-900/40 border-violet-500/70 text-violet-300'
-                    : 'bg-space-950 border-slate-700/80 text-slate-500 hover:border-slate-500'
+                    ? 'bg-violet-50 dark:bg-violet-900/40 border-violet-400 dark:border-violet-500/70 text-violet-700 dark:text-violet-300'
+                    : 'bg-gray-50 dark:bg-space-950 border-gray-300 dark:border-slate-700/80 text-gray-500 dark:text-slate-400'
                 }`}
               >
                 {opt.l}
@@ -252,8 +277,10 @@ const DailyReflection = ({ viewDate, existingEntry, onSave, onBack }: Props) => 
               onChange={v => up({ splenic: { ...entry.splenic, description: v } })}
               placeholder="那個第一秒閃過的感知是什麼？"
             />
-            <div className="space-y-2">
-              <label className="text-sm text-slate-400">我選擇信任它嗎？</label>
+            <div className="space-y-2.5">
+              <label className="text-base font-medium text-gray-700 dark:text-slate-300">
+                我選擇信任它嗎？
+              </label>
               <div className="flex gap-2">
                 {[
                   { v: true, l: '信任了' },
@@ -263,10 +290,10 @@ const DailyReflection = ({ viewDate, existingEntry, onSave, onBack }: Props) => 
                     key={String(opt.v)}
                     type="button"
                     onClick={() => up({ splenic: { ...entry.splenic, trusted: opt.v } })}
-                    className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all border ${
+                    className={`flex-1 py-3 rounded-xl text-base font-medium transition-all border ${
                       entry.splenic.trusted === opt.v
-                        ? 'bg-emerald-900/40 border-emerald-500/70 text-emerald-300'
-                        : 'bg-space-950 border-slate-700/80 text-slate-500 hover:border-slate-500'
+                        ? 'bg-emerald-50 dark:bg-emerald-900/40 border-emerald-400 dark:border-emerald-500/70 text-emerald-700 dark:text-emerald-300'
+                        : 'bg-gray-50 dark:bg-space-950 border-gray-300 dark:border-slate-700/80 text-gray-500 dark:text-slate-400'
                     }`}
                   >
                     {opt.l}
@@ -285,7 +312,10 @@ const DailyReflection = ({ viewDate, existingEntry, onSave, onBack }: Props) => 
       </Card>
 
       {/* 🧪 1/3 調查實驗 */}
-      <Card title="🧪 1/3 調查與實驗筆記">
+      <Card
+        icon={<TestTube2 className="w-4 h-4 text-violet-500 dark:text-violet-400" />}
+        title="1/3 調查與實驗筆記"
+      >
         <Field
           label="今天深研的主題（1 爻）"
           value={entry.investigation.topic}
@@ -314,8 +344,13 @@ const DailyReflection = ({ viewDate, existingEntry, onSave, onBack }: Props) => 
       </Card>
 
       {/* 🛠 DIKW 復盤 */}
-      <Card title="🛠 DIKW 復盤轉化">
-        <p className="text-xs text-slate-600 -mt-2">STAR 框架 — 今日最重要的一件事</p>
+      <Card
+        icon={<Layers className="w-4 h-4 text-violet-500 dark:text-violet-400" />}
+        title="DIKW 復盤轉化"
+      >
+        <p className="text-sm text-gray-400 dark:text-slate-500 -mt-2">
+          STAR 框架 — 今日最重要的一件事
+        </p>
         <div className="grid grid-cols-2 gap-3">
           <Field
             label="S — 情境"
@@ -343,7 +378,7 @@ const DailyReflection = ({ viewDate, existingEntry, onSave, onBack }: Props) => 
           />
         </div>
 
-        <div className="border-t border-slate-700/40 pt-4 space-y-4">
+        <div className="border-t border-gray-200 dark:border-slate-700/40 pt-4 space-y-4">
           <Field
             label="可控的（我的專業、我的反應）"
             value={entry.dikw.controllable}
@@ -357,7 +392,7 @@ const DailyReflection = ({ viewDate, existingEntry, onSave, onBack }: Props) => 
             placeholder="哪些不在我掌控之內？（放下它）"
           />
           <Field
-            label="🌟 脾臟給的明日行動建議"
+            label="脾臟給的明日行動建議"
             value={entry.dikw.wisdomAction}
             onChange={v => up({ dikw: { ...entry.dikw, wisdomAction: v } })}
             placeholder="如果明天再來一次，第一秒直覺告訴我..."
@@ -367,13 +402,23 @@ const DailyReflection = ({ viewDate, existingEntry, onSave, onBack }: Props) => 
 
       <button
         onClick={handleSave}
-        className={`w-full py-4 rounded-2xl font-semibold text-base transition-all active:scale-95 ${
+        className={`w-full py-4 rounded-2xl font-semibold text-base transition-all active:scale-95 flex items-center justify-center gap-2 ${
           saved
-            ? 'bg-emerald-600 text-white'
-            : 'bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-900/40'
+            ? 'bg-emerald-500 dark:bg-emerald-600 text-white'
+            : 'bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-200 dark:shadow-violet-900/40'
         }`}
       >
-        {saved ? '✓ 已儲存' : '儲存今日復盤'}
+        {saved ? (
+          <>
+            <Check className="w-5 h-5" />
+            已儲存
+          </>
+        ) : (
+          <>
+            <Save className="w-5 h-5" />
+            儲存今日復盤
+          </>
+        )}
       </button>
     </div>
   )

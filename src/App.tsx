@@ -1,7 +1,9 @@
 import { useState, useCallback } from 'react'
+import { Sun, Moon, LogOut } from 'lucide-react'
 import { ViewType, DailyEntry } from './types'
 import useStorage from './hooks/useStorage'
 import useAuth from './hooks/useAuth'
+import useTheme from './hooks/useTheme'
 import { todayStr } from './utils/dateUtils'
 import Navigation from './components/Navigation'
 import DailyReflection from './components/DailyReflection'
@@ -10,6 +12,7 @@ import HistoryList from './components/HistoryList'
 import AuthGate from './components/AuthGate'
 
 const App = () => {
+  const { theme, toggleTheme } = useTheme()
   const { user, loading, signInWithGoogle, signOut } = useAuth()
   const [view, setView] = useState<ViewType>('reflection')
   const [viewingDate, setViewingDate] = useState<string>(todayStr())
@@ -33,8 +36,8 @@ const App = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-space-950 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-violet-600 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-gray-50 dark:bg-space-950 flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -44,26 +47,41 @@ const App = () => {
   }
 
   return (
-    <div className="min-h-screen bg-space-950">
-      {/* 同步指示條 */}
+    <div className="min-h-screen bg-gray-50 dark:bg-space-950">
       {syncing && (
         <div className="fixed top-0 left-0 right-0 h-0.5 bg-violet-500 animate-pulse z-50" />
       )}
 
-      {/* 右上角使用者狀態 */}
-      <div className="fixed top-3 right-4 z-40 flex items-center gap-2">
-        <span
-          className="w-6 h-6 rounded-full bg-violet-900 border border-violet-700 flex items-center justify-center text-[10px] text-violet-300 font-bold cursor-default"
-          title={user.email ?? ''}
-        >
-          {user.email?.[0]?.toUpperCase() ?? 'A'}
-        </span>
+      {/* 右上角工具列 */}
+      <div className="fixed top-3 right-4 z-40 flex items-center gap-3">
+        {/* 主題切換 */}
         <button
-          onClick={signOut}
-          className="text-[10px] text-slate-700 hover:text-slate-400 transition-colors"
+          onClick={toggleTheme}
+          className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors"
+          title={theme === 'dark' ? '切換淺色模式' : '切換深色模式'}
         >
-          登出
+          {theme === 'dark'
+            ? <Sun className="w-4 h-4" />
+            : <Moon className="w-4 h-4" />
+          }
         </button>
+
+        {/* 使用者 + 登出 */}
+        <div className="flex items-center gap-1.5">
+          <span
+            className="w-7 h-7 rounded-full bg-violet-100 dark:bg-violet-900 border border-violet-300 dark:border-violet-700 flex items-center justify-center text-xs text-violet-700 dark:text-violet-300 font-bold cursor-default"
+            title={user.email ?? ''}
+          >
+            {user.email?.[0]?.toUpperCase() ?? 'A'}
+          </span>
+          <button
+            onClick={signOut}
+            className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 dark:text-slate-600 hover:text-gray-600 dark:hover:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
+            title="登出"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
 
       <div className="overflow-y-auto">
@@ -75,7 +93,7 @@ const App = () => {
             onBack={viewingDate !== todayStr() ? handleBack : undefined}
           />
         )}
-        {view === 'dashboard' && <Dashboard entries={entries} />}
+        {view === 'dashboard' && <Dashboard entries={entries} isDark={theme === 'dark'} />}
         {view === 'history' && (
           <HistoryList entries={entries} onEntryClick={handleEntryClick} />
         )}
