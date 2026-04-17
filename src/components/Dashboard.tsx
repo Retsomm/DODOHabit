@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useThemeStore } from '../store/themeStore'
 import {
   LineChart,
   Line,
@@ -22,16 +23,15 @@ import {
 
 interface Props {
   entries: DailyEntry[]
-  isDark: boolean
 }
 
 const heatmapColor = (entry?: DailyEntry): string => {
   if (!entry) return 'transparent'
   const score = entry.successScore - entry.bitternessScore
-  if (score >= 3) return '#059669'
-  if (score >= 1) return '#34d399'
-  if (score === 0) return '#6366f1'
-  if (score >= -2) return '#d97706'
+  if (score >= 6) return '#059669'
+  if (score >= 2) return '#34d399'
+  if (score >= -1) return '#6366f1'
+  if (score >= -5) return '#d97706'
   return '#991b1b'
 }
 
@@ -44,7 +44,8 @@ const heatmapTip = (entry?: DailyEntry, date?: string): string => {
 
 const DAY_LABELS = ['日', '一', '二', '三', '四', '五', '六']
 
-const Dashboard = ({ entries, isDark }: Props) => {
+const Dashboard = ({ entries }: Props) => {
+  const isDark = useThemeStore(s => s.theme) === 'dark'
   const entryMap = useMemo(() => {
     const map = new Map<string, DailyEntry>()
     entries.forEach(e => map.set(e.date, e))
@@ -234,8 +235,8 @@ const Dashboard = ({ entries, isDark }: Props) => {
               interval={4}
             />
             <YAxis
-              domain={[0, 5]}
-              ticks={[1, 2, 3, 4, 5]}
+              domain={[0, 10]}
+              ticks={[0, 2, 4, 6, 8, 10]}
               tick={{ fill: axisColor, fontSize: 10 }}
               tickLine={false}
               axisLine={false}
@@ -352,7 +353,7 @@ const Dashboard = ({ entries, isDark }: Props) => {
                       <div
                         className="h-2 rounded-full"
                         style={{
-                          width: `${((w.success ?? 0) / 5) * 100}%`,
+                          width: `${((w.success ?? 0) / 10) * 100}%`,
                           backgroundColor: '#8b5cf6',
                           minWidth: 4,
                         }}
@@ -367,7 +368,7 @@ const Dashboard = ({ entries, isDark }: Props) => {
                       className="w-2 h-2 rounded-full shrink-0"
                       style={{
                         backgroundColor:
-                          quality >= 2 ? '#059669' : quality >= 0 ? '#6366f1' : '#d97706',
+                          quality >= 4 ? '#059669' : quality >= 0 ? '#6366f1' : '#d97706',
                       }}
                     />
                   </div>

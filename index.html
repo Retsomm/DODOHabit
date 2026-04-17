@@ -11,7 +11,11 @@
     <title>DODOHabit</title>
     <script>
       (function () {
-        if (localStorage.getItem('dodo_theme') !== 'light') {
+        try {
+          const raw = localStorage.getItem('dodo_theme')
+          const theme = raw ? JSON.parse(raw).state?.theme : null
+          if (theme !== 'light') document.documentElement.classList.add('dark')
+        } catch {
           document.documentElement.classList.add('dark')
         }
       })()

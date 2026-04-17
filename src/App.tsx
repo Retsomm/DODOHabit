@@ -1,10 +1,11 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Sun, Moon, LogOut } from 'lucide-react'
 import { ViewType, DailyEntry } from './types'
 import useStorage from './hooks/useStorage'
 import useAuth from './hooks/useAuth'
-import useTheme from './hooks/useTheme'
+import { useThemeStore } from './store/themeStore'
 import { todayStr } from './utils/dateUtils'
+import { setupNotifications } from './lib/messaging'
 import Navigation from './components/Navigation'
 import DailyReflection from './components/DailyReflection'
 import Dashboard from './components/Dashboard'
@@ -12,13 +13,17 @@ import HistoryList from './components/HistoryList'
 import AuthGate from './components/AuthGate'
 
 const App = () => {
-  const { theme, toggleTheme } = useTheme()
+  const { theme, toggleTheme } = useThemeStore()
   const { user, loading, signInWithGoogle, signOut } = useAuth()
   const [view, setView] = useState<ViewType>('reflection')
   const [viewingDate, setViewingDate] = useState<string>(todayStr())
   const { entries, saveEntry, getByDate, syncing } = useStorage(user?.uid)
 
   const currentEntry = getByDate(viewingDate)
+
+  useEffect(() => {
+    if (user) setupNotifications(user.uid)
+  }, [user?.uid])
 
   const handleViewChange = useCallback((v: ViewType) => {
     if (v === 'reflection') setViewingDate(todayStr())
@@ -93,7 +98,7 @@ const App = () => {
             onBack={viewingDate !== todayStr() ? handleBack : undefined}
           />
         )}
-        {view === 'dashboard' && <Dashboard entries={entries} isDark={theme === 'dark'} />}
+        {view === 'dashboard' && <Dashboard entries={entries} />}
         {view === 'history' && (
           <HistoryList entries={entries} onEntryClick={handleEntryClick} />
         )}

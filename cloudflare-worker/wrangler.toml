@@ -1,0 +1,7 @@
+name = "dodohabit-reminder"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+[triggers]
+# 每天 UTC 14:00 = 台北時間 22:00
+crons = ["0 14 * * *"]

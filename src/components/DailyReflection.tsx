@@ -13,8 +13,8 @@ interface Props {
 const makeDefault = (date: string): DailyEntry => ({
   id: crypto.randomUUID(),
   date,
-  successScore: 3,
-  bitternessScore: 3,
+  successScore: 5,
+  bitternessScore: 5,
   successMoment: '',
   bitternessSource: 'none',
   emotionalState: '',
@@ -29,31 +29,64 @@ const makeDefault = (date: string): DailyEntry => ({
   updatedAt: new Date().toISOString(),
 })
 
-const ScoreBtn = ({
+const ScoreSlider = ({
   value,
-  selected,
   color,
-  onClick,
+  onChange,
 }: {
   value: number
-  selected: boolean
   color: 'violet' | 'amber'
-  onClick: () => void
-}) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className={`w-10 h-10 rounded-full font-bold text-base transition-all border-2 ${
-      selected
-        ? color === 'violet'
-          ? 'bg-violet-600 border-violet-500 text-white scale-110 shadow-lg shadow-violet-200 dark:shadow-violet-900/50'
-          : 'bg-amber-500 border-amber-400 text-white scale-110 shadow-lg shadow-amber-200 dark:shadow-amber-900/50'
-        : 'bg-gray-100 dark:bg-space-950 border-gray-300 dark:border-slate-700 text-gray-400 dark:text-slate-500 hover:border-gray-400 dark:hover:border-slate-500'
-    }`}
-  >
-    {value}
-  </button>
-)
+  onChange: (v: number) => void
+}) => {
+  const thumbCls = color === 'violet'
+    ? '[&::-webkit-slider-thumb]:bg-violet-600 [&::-moz-range-thumb]:bg-violet-600'
+    : '[&::-webkit-slider-thumb]:bg-amber-500 [&::-moz-range-thumb]:bg-amber-500'
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <span
+          className={`text-3xl font-bold tabular-nums ${
+            color === 'violet'
+              ? 'text-violet-600 dark:text-violet-400'
+              : 'text-amber-500 dark:text-amber-400'
+          }`}
+        >
+          {value}
+        </span>
+        <span className="text-sm text-gray-400 dark:text-slate-500">/ 10</span>
+      </div>
+      <div className="relative flex items-center h-5">
+        <div className="absolute w-full h-2 rounded-full bg-gray-200 dark:bg-slate-700 pointer-events-none" />
+        <input
+          type="range"
+          min={0}
+          max={10}
+          step={1}
+          value={value}
+          onChange={e => onChange(Number(e.target.value))}
+          className={`relative w-full appearance-none bg-transparent cursor-pointer
+            [&::-webkit-slider-thumb]:appearance-none
+            [&::-webkit-slider-thumb]:w-4
+            [&::-webkit-slider-thumb]:h-4
+            [&::-webkit-slider-thumb]:rounded-full
+            [&::-webkit-slider-thumb]:shadow-sm
+            [&::-webkit-slider-thumb]:cursor-pointer
+            [&::-moz-range-thumb]:w-4
+            [&::-moz-range-thumb]:h-4
+            [&::-moz-range-thumb]:rounded-full
+            [&::-moz-range-thumb]:border-0
+            ${thumbCls}`}
+        />
+      </div>
+      <div className="flex justify-between text-xs text-gray-400 dark:text-slate-500">
+        <span>0</span>
+        <span>5</span>
+        <span>10</span>
+      </div>
+    </div>
+  )
+}
 
 const Card = ({
   icon,
@@ -107,37 +140,41 @@ const BITTERNESS_OPTS: { value: BitternessSource; label: string }[] = [
   { value: 'none', label: '沒有苦澀' },
 ]
 
+type SaveStatus = 'unsaved' | 'saving' | 'saved'
+
 const DailyReflection = ({ viewDate, existingEntry, onSave, onBack }: Props) => {
   const [entry, setEntry] = useState<DailyEntry>(existingEntry ?? makeDefault(viewDate))
-  const [saved, setSaved] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>(existingEntry ? 'saved' : 'unsaved')
   const isToday = viewDate === todayStr()
 
   useEffect(() => {
     setEntry(existingEntry ?? makeDefault(viewDate))
-    setSaved(false)
+    setSaveStatus(existingEntry ? 'saved' : 'unsaved')
   }, [existingEntry, viewDate])
 
-  const up = (partial: Partial<DailyEntry>) =>
+  const up = (partial: Partial<DailyEntry>) => {
     setEntry(prev => ({ ...prev, ...partial, updatedAt: new Date().toISOString() }))
+    setSaveStatus('unsaved')
+  }
 
   const energyScore = entry.successScore - entry.bitternessScore
   const energyLabel =
-    energyScore >= 3 ? '能量充沛'
-    : energyScore >= 1 ? '狀態不錯'
-    : energyScore === 0 ? '能量平衡'
-    : energyScore >= -2 ? '注意苦澀'
+    energyScore >= 6 ? '能量充沛'
+    : energyScore >= 2 ? '狀態不錯'
+    : energyScore >= -1 ? '能量平衡'
+    : energyScore >= -5 ? '注意苦澀'
     : '需要休息'
   const energyColor =
-    energyScore >= 3 ? 'text-emerald-600 dark:text-emerald-400'
-    : energyScore >= 1 ? 'text-teal-600 dark:text-teal-400'
-    : energyScore === 0 ? 'text-blue-600 dark:text-blue-400'
-    : energyScore >= -2 ? 'text-amber-600 dark:text-amber-400'
+    energyScore >= 6 ? 'text-emerald-600 dark:text-emerald-400'
+    : energyScore >= 2 ? 'text-teal-600 dark:text-teal-400'
+    : energyScore >= -1 ? 'text-blue-600 dark:text-blue-400'
+    : energyScore >= -5 ? 'text-amber-600 dark:text-amber-400'
     : 'text-red-600 dark:text-red-400'
 
   const handleSave = () => {
+    setSaveStatus('saving')
     onSave(entry)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+    setTimeout(() => setSaveStatus('saved'), 600)
   }
 
   return (
@@ -172,34 +209,22 @@ const DailyReflection = ({ viewDate, existingEntry, onSave, onBack }: Props) => 
         icon={<Zap className="w-4 h-4 text-violet-500 dark:text-violet-400" />}
         title="能量場覺察"
       >
-        <div className="grid grid-cols-2 gap-5">
-          <div className="space-y-2.5">
+        <div className="space-y-5">
+          <div className="space-y-2">
             <label className="text-base font-medium text-gray-700 dark:text-slate-300">成功感</label>
-            <div className="flex gap-1.5">
-              {[1, 2, 3, 4, 5].map(v => (
-                <ScoreBtn
-                  key={v}
-                  value={v}
-                  selected={entry.successScore === v}
-                  color="violet"
-                  onClick={() => up({ successScore: v })}
-                />
-              ))}
-            </div>
+            <ScoreSlider
+              value={entry.successScore}
+              color="violet"
+              onChange={v => up({ successScore: v })}
+            />
           </div>
-          <div className="space-y-2.5">
+          <div className="space-y-2">
             <label className="text-base font-medium text-gray-700 dark:text-slate-300">苦澀感</label>
-            <div className="flex gap-1.5">
-              {[1, 2, 3, 4, 5].map(v => (
-                <ScoreBtn
-                  key={v}
-                  value={v}
-                  selected={entry.bitternessScore === v}
-                  color="amber"
-                  onClick={() => up({ bitternessScore: v })}
-                />
-              ))}
-            </div>
+            <ScoreSlider
+              value={entry.bitternessScore}
+              color="amber"
+              onChange={v => up({ bitternessScore: v })}
+            />
           </div>
         </div>
 
@@ -402,21 +427,29 @@ const DailyReflection = ({ viewDate, existingEntry, onSave, onBack }: Props) => 
 
       <button
         onClick={handleSave}
+        disabled={saveStatus === 'saving'}
         className={`w-full py-4 rounded-2xl font-semibold text-base transition-all active:scale-95 flex items-center justify-center gap-2 ${
-          saved
+          saveStatus === 'saved'
             ? 'bg-emerald-500 dark:bg-emerald-600 text-white'
+            : saveStatus === 'saving'
+            ? 'bg-violet-400 dark:bg-violet-800 text-white cursor-not-allowed'
             : 'bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-200 dark:shadow-violet-900/40'
         }`}
       >
-        {saved ? (
+        {saveStatus === 'saved' ? (
           <>
             <Check className="w-5 h-5" />
-            已儲存
+            儲存完成
+          </>
+        ) : saveStatus === 'saving' ? (
+          <>
+            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            儲存中
           </>
         ) : (
           <>
             <Save className="w-5 h-5" />
-            儲存今日復盤
+            未儲存 — 點擊儲存
           </>
         )}
       </button>
