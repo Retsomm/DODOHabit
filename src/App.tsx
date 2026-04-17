@@ -10,10 +10,10 @@ import HistoryList from './components/HistoryList'
 import AuthGate from './components/AuthGate'
 
 const App = () => {
-  const { session, loading, signInWithGoogle, signOut } = useAuth()
+  const { user, loading, signInWithGoogle, signOut } = useAuth()
   const [view, setView] = useState<ViewType>('reflection')
   const [viewingDate, setViewingDate] = useState<string>(todayStr())
-  const { entries, saveEntry, getByDate, syncing } = useStorage(session?.user?.id)
+  const { entries, saveEntry, getByDate, syncing } = useStorage(user?.uid)
 
   const currentEntry = getByDate(viewingDate)
 
@@ -39,7 +39,7 @@ const App = () => {
     )
   }
 
-  if (!session) {
+  if (!user) {
     return <AuthGate onSignIn={signInWithGoogle} />
   }
 
@@ -54,9 +54,9 @@ const App = () => {
       <div className="fixed top-3 right-4 z-40 flex items-center gap-2">
         <span
           className="w-6 h-6 rounded-full bg-violet-900 border border-violet-700 flex items-center justify-center text-[10px] text-violet-300 font-bold cursor-default"
-          title={session.user.email}
+          title={user.email ?? ''}
         >
-          {session.user.email?.[0]?.toUpperCase() ?? 'A'}
+          {user.email?.[0]?.toUpperCase() ?? 'A'}
         </span>
         <button
           onClick={signOut}

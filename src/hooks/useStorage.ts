@@ -1,58 +1,9 @@
 import { useState, useCallback, useEffect } from 'react'
-import {
-  DailyEntry,
-  BitternessSource,
-  SplenicData,
-  InvestigationData,
-  ExperimentData,
-  DikwData,
-} from '../types'
-import { supabase } from '../lib/supabase'
+import { collection, getDocs, setDoc, doc } from 'firebase/firestore'
+import { db } from '../lib/firebase'
+import { DailyEntry } from '../types'
 
 const STORAGE_KEY = 'dodo_entries_v1'
-
-type DBRow = Record<string, unknown>
-
-const toDB = (entry: DailyEntry, userId: string) => ({
-  id: entry.id,
-  user_id: userId,
-  date: entry.date,
-  success_score: entry.successScore,
-  bitterness_score: entry.bitternessScore,
-  success_moment: entry.successMoment,
-  bitterness_source: entry.bitternessSource,
-  emotional_state: entry.emotionalState,
-  splenic: entry.splenic,
-  investigation: entry.investigation,
-  experiment: entry.experiment,
-  dikw: entry.dikw,
-  created_at: entry.createdAt,
-  updated_at: entry.updatedAt,
-})
-
-const fromDB = (row: DBRow): DailyEntry => ({
-  id: row.id as string,
-  date: row.date as string,
-  successScore: row.success_score as number,
-  bitternessScore: row.bitterness_score as number,
-  successMoment: (row.success_moment as string) ?? '',
-  bitternessSource: (row.bitterness_source as BitternessSource) ?? 'none',
-  emotionalState: (row.emotional_state as string) ?? '',
-  splenic: (row.splenic as SplenicData) ?? {
-    hadIntuition: false,
-    description: '',
-    trusted: false,
-    outcome: '',
-  },
-  investigation: (row.investigation as InvestigationData) ?? { topic: '', findings: '' },
-  experiment: (row.experiment as ExperimentData) ?? { whatFailed: '', dataLearned: '' },
-  dikw: (row.dikw as DikwData) ?? {
-    situation: '', task: '', action: '', result: '',
-    controllable: '', uncontrollable: '', wisdomAction: '',
-  },
-  createdAt: (row.created_at as string) ?? new Date().toISOString(),
-  updatedAt: (row.updated_at as string) ?? new Date().toISOString(),
-})
 
 const persist = (next: DailyEntry[]): DailyEntry[] => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
@@ -70,44 +21,36 @@ const useStorage = (userId?: string) => {
   })
   const [syncing, setSyncing] = useState(false)
 
-  // 登入後從 Supabase 拉取資料並合併
+  // 登入後從 Firestore 拉取資料並合併
   useEffect(() => {
     if (!userId) return
 
     const sync = async () => {
       setSyncing(true)
       try {
-        const { data, error } = await supabase
-          .from('daily_entries')
-          .select('*')
-          .eq('user_id', userId)
-
-        if (error) throw error
-
-        const remote = (data ?? []).map(fromDB)
+        const snapshot = await getDocs(collection(db, 'users', userId, 'entries'))
+        const remote: DailyEntry[] = snapshot.docs.map(d => d.data() as DailyEntry)
 
         setEntries(prev => {
           const remoteMap = new Map(remote.map(e => [e.date, e]))
           // 找出本機有但雲端沒有的（離線建立的記錄）
           const localOnly = prev.filter(e => !remoteMap.has(e.date))
 
-          // 將離線記錄推上 Supabase
+          // 將離線記錄推上 Firestore
           if (localOnly.length > 0) {
-            supabase
-              .from('daily_entries')
-              .upsert(localOnly.map(e => toDB(e, userId)))
-              .then(({ error }) => {
-                if (error) console.error('Push offline entries failed:', error)
-              })
+            Promise.all(
+              localOnly.map(e =>
+                setDoc(doc(db, 'users', userId, 'entries', e.date), e)
+              )
+            ).catch(err => console.error('Push offline entries failed:', err))
           }
 
-          // 合併：remote 為主，本機離線記錄補充
           const merged = [...remote, ...localOnly]
           merged.sort((a, b) => b.date.localeCompare(a.date))
           return persist(merged)
         })
       } catch (err) {
-        console.error('Supabase sync failed:', err)
+        console.error('Firestore sync failed:', err)
       } finally {
         setSyncing(false)
       }
@@ -126,14 +69,11 @@ const useStorage = (userId?: string) => {
         return persist(next)
       })
 
-      // 同步至 Supabase（背景執行）
+      // 同步至 Firestore（背景執行）
       if (userId) {
-        supabase
-          .from('daily_entries')
-          .upsert(toDB(entry, userId), { onConflict: 'user_id,date' })
-          .then(({ error }) => {
-            if (error) console.error('Supabase upsert failed:', error)
-          })
+        setDoc(doc(db, 'users', userId, 'entries', entry.date), entry).catch(err =>
+          console.error('Firestore save failed:', err)
+        )
       }
     },
     [userId]

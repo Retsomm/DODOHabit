@@ -1,36 +1,33 @@
 import { useState, useEffect } from 'react'
-import { Session } from '@supabase/supabase-js'
-import { supabase } from '../lib/supabase'
+import {
+  User,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut as firebaseSignOut,
+  onAuthStateChanged,
+} from 'firebase/auth'
+import { auth } from '../lib/firebase'
 
 const useAuth = () => {
-  const [session, setSession] = useState<Session | null>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
+    const unsubscribe = onAuthStateChanged(auth, currentUser => {
+      setUser(currentUser)
       setLoading(false)
     })
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-      setLoading(false)
-    })
-
-    return () => subscription.unsubscribe()
+    return () => unsubscribe()
   }, [])
 
-  const signInWithGoogle = () =>
-    supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin },
-    })
+  const signInWithGoogle = async () => {
+    const provider = new GoogleAuthProvider()
+    await signInWithPopup(auth, provider)
+  }
 
-  const signOut = () => supabase.auth.signOut()
+  const signOut = () => firebaseSignOut(auth)
 
-  return { session, loading, signInWithGoogle, signOut }
+  return { user, loading, signInWithGoogle, signOut }
 }
 
 export default useAuth
