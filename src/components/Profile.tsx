@@ -62,10 +62,12 @@ const OrbFullscreen = ({ onClose }: { onClose: () => void }) => (
     {/* Close button */}
     <button
       onClick={onClose}
-      className="absolute bottom-16 left-1/2 -translate-x-1/2 px-8 py-3 rounded-full border border-warm-strong text-warm-slate text-sm font-serif-tc hover:text-cream hover:border-cream/20 transition-colors"
-      style={{ backdropFilter: 'blur(12px)', background: 'rgba(10,8,7,0.6)' }}
+      className="absolute right-5 w-10 h-10 flex items-center justify-center rounded-full border border-warm-strong text-warm-slate hover:text-cream hover:border-cream/20 transition-colors"
+      style={{ backdropFilter: 'blur(12px)', background: 'rgba(10,8,7,0.6)', top: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}
     >
-      關閉
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
     </button>
   </div>
 )
