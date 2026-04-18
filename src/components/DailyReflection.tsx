@@ -516,9 +516,9 @@ const DailyReflection = ({ viewDate, existingEntry, onSave, onBack }: Props) => 
         )}
       </div>
 
-      {/* Bottom navigation — sits above the app Navigation bar (~56px) */}
-      <div className="fixed bottom-14 left-0 right-0 px-6"
-        style={{ background: 'rgba(10,8,7,0.9)', backdropFilter: 'blur(20px)', borderTop: '1px solid rgba(232,201,163,0.08)' }}
+      {/* Bottom navigation — sits above the app Navigation bar (h-16 = 64px + safe area) */}
+      <div className="fixed left-0 right-0 px-6"
+        style={{ bottom: 'calc(64px + env(safe-area-inset-bottom, 0px))', background: 'rgba(10,8,7,0.9)', backdropFilter: 'blur(20px)', borderTop: '1px solid rgba(232,201,163,0.08)' }}
       >
         <div className="max-w-lg mx-auto py-4">
           {step !== 'complete' ? (

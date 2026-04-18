@@ -1,12 +1,54 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="96" fill="#09090f"/>
-  <circle cx="256" cy="256" r="190" fill="none" stroke="#7c3aed" stroke-width="12" opacity="0.6"/>
-  <circle cx="256" cy="256" r="120" fill="none" stroke="#8b5cf6" stroke-width="8" opacity="0.4"/>
-  <circle cx="256" cy="256" r="52" fill="#7c3aed"/>
-  <circle cx="256" cy="88" r="18" fill="#10b981"/>
-  <circle cx="393" cy="172" r="14" fill="#f59e0b"/>
-  <circle cx="393" cy="340" r="14" fill="#f59e0b" opacity="0.7"/>
-  <circle cx="256" cy="424" r="18" fill="#10b981" opacity="0.7"/>
-  <circle cx="119" cy="340" r="14" fill="#6366f1"/>
-  <circle cx="119" cy="172" r="14" fill="#6366f1" opacity="0.7"/>
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#1A110C"/>
+      <stop offset="100%" stop-color="#0A0807"/>
+    </radialGradient>
+    <radialGradient id="core" cx="38%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#F5E6C8"/>
+      <stop offset="40%" stop-color="#E8C9A3"/>
+      <stop offset="75%" stop-color="#D97757"/>
+      <stop offset="100%" stop-color="#B8593A"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#D97757" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#D97757" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="blur-sm">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+    <filter id="blur-md">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+    <filter id="blur-lg">
+      <feGaussianBlur stdDeviation="28"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- Outermost glow halo -->
+  <circle cx="256" cy="256" r="210" fill="url(#glow)" filter="url(#blur-lg)" opacity="0.7"/>
+
+  <!-- Breath ring 3 — faintest -->
+  <circle cx="256" cy="256" r="196" fill="none" stroke="#D97757" stroke-width="1.5" opacity="0.12"/>
+
+  <!-- Breath ring 2 -->
+  <circle cx="256" cy="256" r="162" fill="none" stroke="#D97757" stroke-width="2.5" opacity="0.22"/>
+  <circle cx="256" cy="256" r="162" fill="none" stroke="#D97757" stroke-width="14" opacity="0.06" filter="url(#blur-sm)"/>
+
+  <!-- Breath ring 1 -->
+  <circle cx="256" cy="256" r="124" fill="none" stroke="#E8C9A3" stroke-width="3" opacity="0.35"/>
+  <circle cx="256" cy="256" r="124" fill="none" stroke="#E8C9A3" stroke-width="20" opacity="0.08" filter="url(#blur-sm)"/>
+
+  <!-- Mid glow fill -->
+  <circle cx="256" cy="256" r="96" fill="#D97757" opacity="0.08" filter="url(#blur-md)"/>
+
+  <!-- Core orb -->
+  <circle cx="256" cy="256" r="72" fill="url(#core)"/>
+
+  <!-- Core highlight -->
+  <circle cx="232" cy="232" r="28" fill="#F5E6C8" opacity="0.22"/>
+  <circle cx="228" cy="228" r="10" fill="white" opacity="0.18"/>
 </svg>
