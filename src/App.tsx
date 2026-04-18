@@ -48,8 +48,8 @@ const App = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-space-950 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-warm-950 flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-terracotta border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -59,9 +59,9 @@ const App = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-space-950">
+    <div className="min-h-screen bg-warm-950">
       {syncing && (
-        <div className="fixed top-0 left-0 right-0 h-0.5 bg-violet-500 animate-pulse z-50" />
+        <div className="fixed top-0 left-0 right-0 h-0.5 bg-terracotta animate-pulse z-50" />
       )}
 
       <div className="overflow-y-auto pt-safe">
@@ -98,6 +98,7 @@ const App = () => {
         photoPosition={profile.photoPosition}
         displayName={profile.displayName}
       />
+
     </div>
   )
 }

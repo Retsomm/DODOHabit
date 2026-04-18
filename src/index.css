@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,ital,wght@9..144,0,300;9..144,0,400;9..144,1,300;9..144,1,400&family=Noto+Serif+TC:wght@300;400;500&family=Noto+Sans+TC:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,8 +10,9 @@
   }
 
   body {
-    @apply bg-gray-50 dark:bg-[#09090f] text-gray-900 dark:text-slate-100 antialiased;
+    @apply bg-warm-950 text-cream antialiased;
     padding-bottom: env(safe-area-inset-bottom);
+    font-family: 'Noto Sans TC', system-ui, sans-serif;
   }
 
   * {
@@ -26,7 +29,6 @@
     padding-top: env(safe-area-inset-top, 0px);
   }
 
-  /* safe-area + 工具列高度（py-2 × 2 + h-8 = 48px） */
   .pt-toolbar {
     padding-top: calc(env(safe-area-inset-top, 0px) + 56px);
   }
@@ -43,4 +45,101 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  .bg-warm-radial {
+    background:
+      radial-gradient(ellipse at 20% 10%, rgba(217,119,87,0.08), transparent 50%),
+      radial-gradient(ellipse at 80% 90%, rgba(232,201,163,0.05), transparent 50%),
+      #0A0807;
+  }
+
+  .bg-warm-radial-top {
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(217,119,87,0.07), transparent 55%),
+      #0A0807;
+  }
+
+  .border-warm {
+    border-color: rgba(232,201,163,0.12);
+  }
+
+  .border-warm-strong {
+    border-color: rgba(232,201,163,0.22);
+  }
+
+  .text-cream-dim {
+    color: rgba(245,237,226,0.6);
+  }
+
+  .text-cream-faint {
+    color: rgba(245,237,226,0.35);
+  }
+
+  .glow-terracotta {
+    box-shadow: 0 0 40px rgba(217,119,87,0.4);
+  }
+
+  .glow-terracotta-sm {
+    box-shadow: 0 0 16px rgba(217,119,87,0.3);
+  }
+
+  .glow-champagne {
+    box-shadow: 0 0 20px rgba(232,201,163,0.35);
+  }
+
+  .font-fraunces {
+    font-family: 'Fraunces', 'Noto Serif TC', serif;
+  }
+
+  .font-mono-jetbrains {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .font-serif-tc {
+    font-family: 'Noto Serif TC', serif;
+  }
+}
+
+/* Range slider — terracotta thumb */
+input[type='range'].slider-terracotta {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(232,201,163,0.15);
+  outline: none;
+  cursor: pointer;
+}
+
+input[type='range'].slider-terracotta::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #E8A584, #D97757 60%, #B8593A);
+  box-shadow: 0 0 12px rgba(217,119,87,0.5), 0 2px 6px rgba(0,0,0,0.3);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+input[type='range'].slider-terracotta::-webkit-slider-thumb:active {
+  transform: scale(1.2);
+}
+
+input[type='range'].slider-terracotta::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: radial-gradient(circle at 35% 35%, #E8A584, #D97757 60%, #B8593A);
+  box-shadow: 0 0 12px rgba(217,119,87,0.5), 0 2px 6px rgba(0,0,0,0.3);
+  cursor: pointer;
+}
+
+/* Star pulse animation for SVG */
+@keyframes star-pulse {
+  0%, 100% { r: 4; opacity: 0.6; }
+  50% { r: 10; opacity: 0; }
 }

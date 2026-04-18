@@ -1,100 +1,62 @@
-import { useMemo } from 'react'
-import { useThemeStore } from '../store/themeStore'
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from 'recharts'
-import { format, parseISO } from 'date-fns'
-import { Lightbulb } from 'lucide-react'
+import { useMemo, useRef, useState, useEffect } from 'react'
+import { format } from 'date-fns'
 import { DailyEntry } from '../types'
-import {
-  getLast364Days,
-  getLast30Days,
-  formatShort,
-  formatMonth,
-  getDayOfWeek,
-} from '../utils/dateUtils'
+import { getLast364Days, getLast30Days } from '../utils/dateUtils'
 
 interface Props {
   entries: DailyEntry[]
 }
 
-const heatmapColor = (entry?: DailyEntry): string => {
-  if (!entry) return 'transparent'
-  const score = entry.successScore - entry.bitternessScore
-  if (score >= 6) return '#059669'
-  if (score >= 2) return '#34d399'
-  if (score >= -1) return '#6366f1'
-  if (score >= -5) return '#d97706'
-  return '#991b1b'
+const starColor = (net: number) => {
+  if (net >= 5) return '#F5E6C8'
+  if (net >= 2) return '#E8C9A3'
+  if (net >= -1) return '#D97757'
+  if (net >= -5) return '#B8593A'
+  return '#7A3B2A'
 }
 
-const heatmapTip = (entry?: DailyEntry, date?: string): string => {
-  if (!date) return ''
-  const d = date.slice(5)
-  if (!entry) return `${d} 無記錄`
-  return `${d}  成功 ${entry.successScore} / 苦澀 ${entry.bitternessScore}`
-}
+const StarMap = ({ entries }: { entries: DailyEntry[] }) => {
+  const svgRef = useRef<SVGSVGElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [size, setSize] = useState(320)
+  const [hover, setHover] = useState<{ date: string; x: number; y: number; entry: DailyEntry } | null>(null)
 
-const DAY_LABELS = ['日', '一', '二', '三', '四', '五', '六']
+  useEffect(() => {
+    if (!containerRef.current) return
+    const ro = new ResizeObserver(es => setSize(es[0].contentRect.width))
+    ro.observe(containerRef.current)
+    return () => ro.disconnect()
+  }, [])
 
-const Dashboard = ({ entries }: Props) => {
-  const isDark = useThemeStore(s => s.theme) === 'dark'
-  const entryMap = useMemo(() => {
-    const map = new Map<string, DailyEntry>()
-    entries.forEach(e => map.set(e.date, e))
-    return map
-  }, [entries])
+  const entryMap = useMemo(() => new Map(entries.map(e => [e.date, e])), [entries])
 
-  const last364 = useMemo(() => getLast364Days(), [])
-  const last30 = useMemo(() => getLast30Days(), [])
-
-  const weeks = useMemo(() => {
-    const result: (string | null)[][] = []
-    let week: (string | null)[] = []
-    const padStart = getDayOfWeek(last364[0])
-    for (let i = 0; i < padStart; i++) week.push(null)
-    for (const date of last364) {
-      week.push(date)
-      if (week.length === 7) {
-        result.push(week)
-        week = []
-      }
-    }
-    if (week.length > 0) {
-      while (week.length < 7) week.push(null)
-      result.push(week)
-    }
-    return result
-  }, [last364])
-
-  const monthLabels = useMemo(() => {
-    const labels: { text: string; col: number }[] = []
-    let lastMonth = ''
-    weeks.forEach((week, i) => {
-      const first = week.find(d => d !== null)
-      if (first) {
-        const m = formatMonth(first)
-        if (m !== lastMonth) {
-          labels.push({ text: m, col: i })
-          lastMonth = m
-        }
+  const points = useMemo(() => {
+    const golden = Math.PI * (3 - Math.sqrt(5))
+    const center = size / 2
+    const maxR = center - 14
+    const today = new Date()
+    return Array.from({ length: 364 }, (_, i) => {
+      const d = new Date(today)
+      d.setDate(today.getDate() - i)
+      const dateStr = d.toISOString().slice(0, 10)
+      const entry = entryMap.get(dateStr)
+      const r = Math.sqrt(i / 363) * maxR
+      const theta = i * golden
+      return {
+        i,
+        date: dateStr,
+        entry,
+        x: center + r * Math.cos(theta),
+        y: center + r * Math.sin(theta),
       }
     })
-    return labels
-  }, [weeks])
+  }, [size, entryMap])
 
   const stats = useMemo(() => {
     const total = entries.length
     let streak = 0
-    const today = format(new Date(), 'yyyy-MM-dd')
-    let checkDate = today
+    const todayStr = format(new Date(), 'yyyy-MM-dd')
+    let checkDate = todayStr
     while (entryMap.has(checkDate)) {
       streak++
       const d = new Date(checkDate)
@@ -103,281 +65,214 @@ const Dashboard = ({ entries }: Props) => {
     }
     const thisMonth = format(new Date(), 'yyyy-MM')
     const monthEntries = entries.filter(e => e.date.startsWith(thisMonth))
+    const avgNet = monthEntries.length
+      ? (monthEntries.reduce((s, e) => s + (e.successScore - e.bitternessScore), 0) / monthEntries.length).toFixed(1)
+      : '—'
     const avgSuccess = monthEntries.length
       ? (monthEntries.reduce((s, e) => s + e.successScore, 0) / monthEntries.length).toFixed(1)
       : '—'
-    const avgBitterness = monthEntries.length
-      ? (monthEntries.reduce((s, e) => s + e.bitternessScore, 0) / monthEntries.length).toFixed(1)
-      : '—'
-    return { total, streak, avgSuccess, avgBitterness }
+    return { total, streak, avgNet, avgSuccess }
   }, [entries, entryMap])
 
-  const chartData = useMemo(
-    () =>
-      last30.map(date => {
-        const e = entryMap.get(date)
-        return {
-          date: formatShort(date),
-          成功感: e?.successScore ?? null,
-          苦澀感: e?.bitternessScore ?? null,
-        }
-      }),
-    [last30, entryMap]
-  )
+  const last30 = useMemo(() => getLast30Days(), [])
+  const sparkData = useMemo(() => last30.map(date => {
+    const e = entryMap.get(date)
+    return { date, success: e?.successScore ?? null, bitterness: e?.bitternessScore ?? null }
+  }), [last30, entryMap])
 
-  const sourceStats = useMemo(() => {
-    const thisMonth = format(new Date(), 'yyyy-MM')
-    const monthEntries = entries.filter(e => e.date.startsWith(thisMonth))
-    if (monthEntries.length === 0) return null
-    const counts = { 'self-initiated': 0, 'over-working': 0, both: 0, none: 0 } as Record<string, number>
-    monthEntries.forEach(e => counts[e.bitternessSource]++)
-    return { counts, total: monthEntries.length }
-  }, [entries])
+  const toSvgPath = (key: 'success' | 'bitterness') => {
+    const W = 320, H = 72
+    const pts = sparkData.map((d, i) => ({
+      x: (i / 29) * W,
+      y: d[key] !== null ? H - (d[key]! / 10) * H : null,
+    }))
+    let path = ''
+    let inSeg = false
+    pts.forEach(p => {
+      if (p.y === null) { inSeg = false; return }
+      path += (inSeg ? ' L ' : ' M ') + p.x.toFixed(1) + ' ' + p.y.toFixed(1)
+      inSeg = true
+    })
+    return path
+  }
 
-  const gridColor = isDark ? '#1e1e35' : '#e5e7eb'
-  const axisColor = isDark ? '#64748b' : '#9ca3af'
-  const tooltipBg = isDark ? '#0f0f1a' : '#ffffff'
-  const tooltipBorder = isDark ? '#312e81' : '#e5e7eb'
-
-  const cardCls = 'bg-white dark:bg-space-800 rounded-2xl p-4 border border-gray-200 dark:border-slate-700/50'
-  const sectionTitleCls = 'text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-widest mb-4'
+  const center = size / 2
 
   return (
-    <div className="px-4 pt-5 pb-28 max-w-lg mx-auto space-y-5">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">能量圖譜</h1>
+    <div ref={containerRef} className="w-full space-y-8">
+      {/* Star map */}
+      <div className="relative w-full" style={{ aspectRatio: '1 / 1' }}>
+        <svg
+          ref={svgRef}
+          width="100%"
+          height="100%"
+          viewBox={`0 0 ${size} ${size}`}
+          className="absolute inset-0"
+        >
+          {/* Concentric rings */}
+          {[0.25, 0.5, 0.75, 1].map((f, i) => (
+            <circle key={i}
+              cx={center} cy={center}
+              r={(center - 14) * f}
+              fill="none"
+              stroke="rgba(232,201,163,0.06)"
+              strokeWidth={0.5}
+              strokeDasharray={i === 3 ? undefined : '2 4'}
+            />
+          ))}
+
+          {/* Stars */}
+          {points.map(p => {
+            if (!p.entry) {
+              return (
+                <circle key={p.i} cx={p.x} cy={p.y} r={0.7}
+                  fill="rgba(232,201,163,0.1)"
+                />
+              )
+            }
+            const net = p.entry.successScore - p.entry.bitternessScore
+            const color = starColor(net)
+            const intensity = (p.entry.successScore + p.entry.bitternessScore) / 20
+            const radius = 1 + intensity * 2.5
+            return (
+              <g key={p.i}
+                onMouseEnter={() => setHover({ date: p.date, x: p.x, y: p.y, entry: p.entry! })}
+                onMouseLeave={() => setHover(null)}
+                onTouchStart={() => setHover({ date: p.date, x: p.x, y: p.y, entry: p.entry! })}
+                style={{ cursor: 'pointer' }}
+              >
+                <circle cx={p.x} cy={p.y} r={radius * 3} fill={color} opacity={0.15} style={{ filter: 'blur(2px)' }} />
+                <circle cx={p.x} cy={p.y} r={radius} fill={color} style={{ filter: `drop-shadow(0 0 ${radius * 2}px ${color})` }} />
+              </g>
+            )
+          })}
+
+          {/* Today pulse */}
+          <circle cx={center} cy={center} r={4} fill="none" stroke="#F5E6C8" strokeWidth={0.8} opacity={0.6}>
+            <animate attributeName="r" values="4;10;4" dur="3s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0.6;0;0.6" dur="3s" repeatCount="indefinite" />
+          </circle>
+        </svg>
+
+        {/* Today center label */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="font-mono-jetbrains text-[8px] tracking-[0.25em] text-cream/30 uppercase">TODAY</div>
+        </div>
+
+        {/* Month labels */}
+        {Array.from({ length: 12 }).map((_, i) => {
+          const d = new Date()
+          d.setMonth(d.getMonth() - i)
+          const label = `${d.getMonth() + 1}月`
+          const a = -(i / 12) * Math.PI * 2 - Math.PI / 2
+          const r = center + 6
+          const x = center + r * Math.cos(a)
+          const y = center + r * Math.sin(a)
+          return (
+            <div key={i} className="absolute pointer-events-none font-mono-jetbrains text-[8px] text-cream/25"
+              style={{ left: x, top: y, transform: 'translate(-50%, -50%)' }}>
+              {label}
+            </div>
+          )
+        })}
+
+        {/* Hover tooltip */}
+        {hover && (
+          <div className="absolute pointer-events-none z-10 px-3 py-2 rounded-xl text-xs font-mono-jetbrains border border-warm-strong"
+            style={{
+              left: Math.min(hover.x / size * 100 + 5, 60) + '%',
+              top: Math.max(hover.y / size * 100 - 15, 5) + '%',
+              background: 'rgba(15,11,8,0.95)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <div className="text-cream/60 mb-1">{hover.date.slice(5)}</div>
+            <div>
+              <span className="text-terracotta">成功 {hover.entry.successScore}</span>
+              <span className="text-warm-slate mx-1">/</span>
+              <span className="text-champagne">苦澀 {hover.entry.bitternessScore}</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Legend */}
+      <div className="flex items-center justify-center gap-3 font-mono-jetbrains text-xs text-cream/40 tracking-[0.15em]">
+        <span>DIM</span>
+        {['#7A3B2A', '#B8593A', '#D97757', '#E8C9A3', '#F5E6C8'].map(c => (
+          <span key={c} className="w-2 h-2 rounded-full block" style={{ background: c, boxShadow: `0 0 8px ${c}` }} />
+        ))}
+        <span>BRIGHT</span>
+      </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 gap-3">
         {[
-          { label: '總記錄', value: stats.total, color: 'text-violet-600 dark:text-violet-400' },
-          { label: '連續天數', value: stats.streak, color: 'text-emerald-600 dark:text-emerald-400' },
-          { label: '本月成功均', value: stats.avgSuccess, color: 'text-blue-600 dark:text-blue-400' },
-          { label: '本月苦澀均', value: stats.avgBitterness, color: 'text-amber-600 dark:text-amber-400' },
-        ].map(({ label, value, color }) => (
-          <div key={label} className={`${cardCls} text-center`}>
-            <div className={`text-xl font-bold ${color}`}>{value}</div>
-            <div className="text-xs text-gray-400 dark:text-slate-500 mt-1 leading-tight">{label}</div>
+          { label: '總記錄', value: stats.total, unit: '天', color: 'text-terracotta-soft' },
+          { label: '連續天數', value: stats.streak, unit: '天', color: 'text-[#F5E6C8]' },
+          { label: '本月淨能量', value: stats.avgNet, unit: 'avg', color: 'text-[#8FA683]' },
+          { label: '本月成功均', value: stats.avgSuccess, unit: '/ 10', color: 'text-terracotta' },
+        ].map((s, i) => (
+          <div key={i} className="p-4 rounded-2xl border border-warm-strong bg-warm-800/30">
+            <div className="font-mono-jetbrains text-xs tracking-[0.2em] text-warm-slate uppercase mb-2">{s.label}</div>
+            <div className="flex items-baseline gap-1">
+              <span className={`font-fraunces text-4xl font-light leading-none ${s.color}`}>{s.value}</span>
+              <span className="font-mono-jetbrains text-xs text-warm-slate">{s.unit}</span>
+            </div>
           </div>
         ))}
       </div>
 
-      {/* Heatmap */}
-      <div className={cardCls}>
-        <p className={sectionTitleCls}>過去 364 天 — 能量記錄</p>
-        <div className="overflow-x-auto scrollbar-hide">
-          <div className="inline-flex gap-1 min-w-max">
-            <div className="flex flex-col gap-1 pt-5 mr-0.5">
-              {DAY_LABELS.map(d => (
-                <div
-                  key={d}
-                  className="h-2.5 w-3 text-[9px] text-gray-400 dark:text-slate-600 flex items-center justify-end"
-                >
-                  {d}
-                </div>
-              ))}
-            </div>
-            <div>
-              <div className="relative h-5 mb-0.5">
-                {monthLabels.map(({ text, col }) => (
-                  <span
-                    key={`${text}-${col}`}
-                    className="absolute text-[9px] text-gray-400 dark:text-slate-500"
-                    style={{ left: col * 14 }}
-                  >
-                    {text}
-                  </span>
-                ))}
-              </div>
-              <div className="flex gap-1">
-                {weeks.map((week, wi) => (
-                  <div key={wi} className="flex flex-col gap-1">
-                    {week.map((date, di) => (
-                      <div
-                        key={di}
-                        title={heatmapTip(
-                          date ? (entryMap.get(date) ?? undefined) : undefined,
-                          date ?? undefined
-                        )}
-                        className="w-2.5 h-2.5 rounded-sm transition-transform hover:scale-125 cursor-default"
-                        style={{
-                          backgroundColor: date
-                            ? heatmapColor(entryMap.get(date) ?? undefined)
-                            : isDark ? '#1e1e35' : '#f3f4f6',
-                        }}
-                      />
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
+      {/* Sparkline */}
+      <div className="p-5 rounded-2xl border border-warm-strong bg-warm-800/20">
+        <div className="flex items-center justify-between mb-4">
+          <div className="font-mono-jetbrains text-xs tracking-[0.2em] text-warm-slate uppercase">Last 30 Days</div>
+          <div className="flex gap-3 font-mono-jetbrains text-xs">
+            <span className="flex items-center gap-1.5 text-terracotta">
+              <span className="w-3 h-px bg-terracotta block" />成功
+            </span>
+            <span className="flex items-center gap-1.5 text-champagne">
+              <span className="w-3 h-px bg-champagne block" />苦澀
+            </span>
           </div>
         </div>
-        <div className="flex items-center gap-2 mt-3">
-          <span className="text-xs text-gray-400 dark:text-slate-500">苦澀</span>
-          {['#991b1b', '#d97706', '#6366f1', '#34d399', '#059669'].map(c => (
-            <div key={c} className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: c }} />
-          ))}
-          <span className="text-xs text-gray-400 dark:text-slate-500">成功</span>
+        <svg viewBox="0 0 320 72" className="w-full" style={{ height: 72 }}>
+          <path d={toSvgPath('success')} stroke="#D97757" strokeWidth="1.5" fill="none" opacity="0.9" />
+          <path d={toSvgPath('bitterness')} stroke="#E8C9A3" strokeWidth="1.5" fill="none" opacity="0.7" strokeDasharray="2 2" />
+        </svg>
+        <div className="flex justify-between font-mono-jetbrains text-xs text-warm-slate mt-2">
+          <span>30d ago</span><span>today</span>
         </div>
       </div>
 
-      {/* 30-day trend */}
-      <div className={cardCls}>
-        <p className={sectionTitleCls}>近 30 天能量趨勢</p>
-        <ResponsiveContainer width="100%" height={180}>
-          <LineChart data={chartData} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
-            <XAxis
-              dataKey="date"
-              tick={{ fill: axisColor, fontSize: 10 }}
-              tickLine={false}
-              axisLine={false}
-              interval={4}
-            />
-            <YAxis
-              domain={[0, 10]}
-              ticks={[0, 2, 4, 6, 8, 10]}
-              tick={{ fill: axisColor, fontSize: 10 }}
-              tickLine={false}
-              axisLine={false}
-            />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: tooltipBg,
-                border: `1px solid ${tooltipBorder}`,
-                borderRadius: 10,
-                fontSize: 13,
-              }}
-              labelStyle={{ color: isDark ? '#94a3b8' : '#6b7280', marginBottom: 4 }}
-              itemStyle={{ color: isDark ? '#cbd5e1' : '#374151' }}
-            />
-            <Line
-              type="monotone"
-              dataKey="成功感"
-              stroke="#8b5cf6"
-              strokeWidth={2}
-              dot={{ fill: '#8b5cf6', r: 2.5, strokeWidth: 0 }}
-              activeDot={{ r: 4 }}
-              connectNulls={false}
-            />
-            <Line
-              type="monotone"
-              dataKey="苦澀感"
-              stroke="#f59e0b"
-              strokeWidth={2}
-              dot={{ fill: '#f59e0b', r: 2.5, strokeWidth: 0 }}
-              activeDot={{ r: 4 }}
-              connectNulls={false}
-            />
-            <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* Bitterness source */}
-      {sourceStats && (
-        <div className={cardCls}>
-          <p className={sectionTitleCls}>本月苦澀來源分析</p>
-          <div className="space-y-3">
-            {(
-              [
-                { key: 'self-initiated', label: '主動發起', color: '#ef4444' },
-                { key: 'over-working', label: '過度勞動', color: '#f97316' },
-                { key: 'both', label: '兩者都有', color: '#eab308' },
-                { key: 'none', label: '沒有苦澀', color: '#10b981' },
-              ] as const
-            ).map(({ key, label, color }) => {
-              const count = sourceStats.counts[key] ?? 0
-              const pct = sourceStats.total > 0 ? (count / sourceStats.total) * 100 : 0
-              return (
-                <div key={key} className="flex items-center gap-3">
-                  <span className="text-sm text-gray-500 dark:text-slate-400 w-16 shrink-0">{label}</span>
-                  <div className="flex-1 bg-gray-100 dark:bg-space-950 rounded-full h-2">
-                    <div
-                      className="h-2 rounded-full transition-all duration-500"
-                      style={{ width: `${pct}%`, backgroundColor: color }}
-                    />
-                  </div>
-                  <span className="text-sm text-gray-400 dark:text-slate-500 w-7 text-right shrink-0">
-                    {count}天
-                  </span>
-                </div>
-              )
-            })}
-          </div>
-          <p className="text-sm text-gray-400 dark:text-slate-500 mt-4 pt-3 border-t border-gray-200 dark:border-slate-700/40 flex items-center gap-1.5">
-            <Lightbulb className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-            投射者指標：苦澀感 = 主動發起的訊號，而非能力不足
-          </p>
+      {/* Insight */}
+      <div className="p-5 rounded-2xl border border-champagne/12 bg-champagne/5">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-5 h-5 rounded-full glow-terracotta-sm shrink-0"
+            style={{ background: 'radial-gradient(circle at 30% 30%, #F5E6C8, #D97757)' }} />
+          <div className="font-mono-jetbrains text-xs tracking-[0.2em] text-warm-slate uppercase">Insight · 投射者筆記</div>
         </div>
-      )}
+        <p className="font-serif-tc text-sm text-cream/80 leading-relaxed italic">
+          苦澀感是<span className="text-terracotta-soft not-italic">主動發起</span>的訊號，不是能力不足。<br />
+          觀察你的星圖節律。
+        </p>
+      </div>
+    </div>
+  )
+}
 
-      {/* Weekly view */}
-      {entries.length >= 3 && (() => {
-        const today = new Date()
-        const weeklyData = Array.from({ length: 8 }, (_, i) => {
-          const weekEnd = new Date(today)
-          weekEnd.setDate(today.getDate() - i * 7)
-          const weekStart = new Date(weekEnd)
-          weekStart.setDate(weekEnd.getDate() - 6)
-          const startStr = format(weekStart, 'yyyy-MM-dd')
-          const endStr = format(weekEnd, 'yyyy-MM-dd')
-          const weekEntries = entries.filter(e => e.date >= startStr && e.date <= endStr)
-          const label = `W${8 - i}`
-          if (weekEntries.length === 0) return { label, success: null, bitterness: null, count: 0 }
-          return {
-            label,
-            success: +(weekEntries.reduce((s, e) => s + e.successScore, 0) / weekEntries.length).toFixed(1),
-            bitterness: +(weekEntries.reduce((s, e) => s + e.bitternessScore, 0) / weekEntries.length).toFixed(1),
-            count: weekEntries.length,
-          }
-        }).reverse()
-
-        return (
-          <div className={cardCls}>
-            <p className={sectionTitleCls}>近 8 週平均能量</p>
-            <div className="space-y-2.5">
-              {weeklyData.map(w => {
-                if (!w.success && !w.bitterness)
-                  return (
-                    <div key={w.label} className="flex items-center gap-3">
-                      <span className="text-xs text-gray-300 dark:text-slate-700 w-8 shrink-0">{w.label}</span>
-                      <span className="text-sm text-gray-300 dark:text-slate-700">無記錄</span>
-                    </div>
-                  )
-                const quality = (w.success ?? 0) - (w.bitterness ?? 0)
-                return (
-                  <div key={w.label} className="flex items-center gap-3">
-                    <span className="text-sm text-gray-400 dark:text-slate-500 w-8 shrink-0">{w.label}</span>
-                    <div className="flex-1">
-                      <div
-                        className="h-2 rounded-full"
-                        style={{
-                          width: `${((w.success ?? 0) / 10) * 100}%`,
-                          backgroundColor: '#8b5cf6',
-                          minWidth: 4,
-                        }}
-                      />
-                    </div>
-                    <div className="flex gap-2 text-sm shrink-0">
-                      <span className="text-violet-600 dark:text-violet-400 font-medium">{w.success}</span>
-                      <span className="text-gray-300 dark:text-slate-700">/</span>
-                      <span className="text-amber-600 dark:text-amber-400 font-medium">{w.bitterness}</span>
-                    </div>
-                    <div
-                      className="w-2 h-2 rounded-full shrink-0"
-                      style={{
-                        backgroundColor:
-                          quality >= 4 ? '#059669' : quality >= 0 ? '#6366f1' : '#d97706',
-                      }}
-                    />
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )
-      })()}
+const Dashboard = ({ entries }: Props) => {
+  return (
+    <div className="px-5 pt-6 pb-32 max-w-lg mx-auto space-y-6 bg-warm-radial-top min-h-screen">
+      <div className="flex items-baseline justify-between">
+        <div>
+          <div className="font-mono-jetbrains text-xs tracking-[0.25em] text-warm-slate uppercase mb-1">Energy · 能量星圖</div>
+          <h1 className="font-fraunces text-3xl font-light text-cream">
+            過去 <em className="italic text-terracotta-soft">一年</em>
+          </h1>
+        </div>
+      </div>
+      <StarMap entries={entries} />
     </div>
   )
 }
