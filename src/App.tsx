@@ -59,12 +59,12 @@ const App = () => {
   }
 
   return (
-    <div className="h-dvh flex flex-col bg-warm-950 overflow-hidden">
+    <div className="h-dvh bg-warm-950 overflow-hidden">
       {syncing && (
-        <div className="shrink-0 h-0.5 bg-terracotta animate-pulse z-50" />
+        <div className="fixed top-0 left-0 right-0 h-0.5 bg-terracotta animate-pulse z-50" />
       )}
 
-      <div className="flex-1 min-h-0">
+      <div className="h-full overflow-y-auto pt-safe">
         {view === 'reflection' && (
           <DailyReflection
             viewDate={viewingDate}
@@ -73,22 +73,18 @@ const App = () => {
             onBack={viewingDate !== todayStr() ? handleBack : undefined}
           />
         )}
-        {view !== 'reflection' && (
-          <div className="h-full overflow-y-auto pt-safe">
-            {view === 'dashboard' && <Dashboard entries={entries} />}
-            {view === 'history' && (
-              <HistoryList entries={entries} onEntryClick={handleEntryClick} onDateSelect={handleDateSelect} />
-            )}
-            {view === 'profile' && (
-              <Profile
-                userEmail={user.email}
-                profile={profile}
-                saving={saving}
-                onSave={saveProfile}
-                onSignOut={signOut}
-              />
-            )}
-          </div>
+        {view === 'dashboard' && <Dashboard entries={entries} />}
+        {view === 'history' && (
+          <HistoryList entries={entries} onEntryClick={handleEntryClick} onDateSelect={handleDateSelect} />
+        )}
+        {view === 'profile' && (
+          <Profile
+            userEmail={user.email}
+            profile={profile}
+            saving={saving}
+            onSave={saveProfile}
+            onSignOut={signOut}
+          />
         )}
       </div>
 

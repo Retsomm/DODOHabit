@@ -113,10 +113,9 @@ const DailyReflection = ({ viewDate, existingEntry, onSave, onBack }: Props) => 
   const net = entry.successScore - entry.bitternessScore
 
   return (
-    <div className="h-full bg-warm-radial-top flex flex-col">
+    <div className="min-h-screen bg-warm-radial-top flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-7 pb-3 shrink-0"
-        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 1.75rem)' }}>
+      <div className="flex items-center justify-between px-7 pt-7 pb-3">
         <div className="flex items-center gap-3">
           {(onBack && step === 'energy') && (
             <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-full border border-warm-strong text-warm-slate hover:text-cream transition-colors">
@@ -168,7 +167,7 @@ const DailyReflection = ({ viewDate, existingEntry, onSave, onBack }: Props) => 
       </div>
 
       {/* Step content */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-7 pb-6 animate-slide-up" key={step}>
+      <div className="flex-1 overflow-y-auto px-7 pb-52 animate-slide-up" key={step}>
         {step === 'energy' && (
           <div className="max-w-lg mx-auto pt-10 space-y-10">
             <div>
@@ -517,9 +516,9 @@ const DailyReflection = ({ viewDate, existingEntry, onSave, onBack }: Props) => 
         )}
       </div>
 
-      {/* Bottom navigation */}
-      <div className="shrink-0 px-6"
-        style={{ background: 'rgba(10,8,7,0.9)', backdropFilter: 'blur(20px)', borderTop: '1px solid rgba(232,201,163,0.08)' }}
+      {/* Bottom navigation — sits above the app Navigation bar (h-16 = 64px + safe area) */}
+      <div className="fixed left-0 right-0 px-6"
+        style={{ bottom: 'calc(64px + env(safe-area-inset-bottom, 0px))', background: 'rgba(10,8,7,0.9)', backdropFilter: 'blur(20px)', borderTop: '1px solid rgba(232,201,163,0.08)' }}
       >
         <div className="max-w-lg mx-auto py-4">
           {step !== 'complete' ? (

@@ -6,10 +6,14 @@
 
 @layer base {
   html {
+    height: 100%;
+    overflow: hidden;
     -webkit-tap-highlight-color: transparent;
   }
 
   body {
+    height: 100%;
+    overflow: hidden;
     @apply bg-warm-950 text-cream antialiased;
     padding-bottom: env(safe-area-inset-bottom);
     font-family: 'Noto Sans TC', system-ui, sans-serif;
@@ -21,11 +25,6 @@
 
   textarea {
     @apply leading-relaxed;
-  }
-
-  /* iOS Safari 在 font-size < 16px 的 input 觸發時會自動放大畫面，固定 16px 防止此行為 */
-  input, textarea, select {
-    font-size: 16px;
   }
 }
 
@@ -103,6 +102,11 @@
   .font-serif-tc {
     font-family: 'Noto Serif TC', serif;
   }
+}
+
+/* Prevent iOS Safari auto-zoom: unlayered rules override all @layer rules including Tailwind utilities */
+input:not([type='range']), textarea, select {
+  font-size: 16px;
 }
 
 /* Range slider — terracotta thumb */
