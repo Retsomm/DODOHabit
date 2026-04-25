@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { DailyEntry, BitternessSource } from '../types'
 import { todayStr, formatDisplay } from '../utils/dateUtils'
 
@@ -82,6 +82,25 @@ const DailyReflection = ({ viewDate, existingEntry, onSave, onBack }: Props) => 
   const [step, setStep] = useState<Step>(() => existingEntry ? 'complete' : 'energy')
   const [saveStatus, setSaveStatus] = useState<'unsaved' | 'saving' | 'saved'>(existingEntry ? 'saved' : 'unsaved')
   const isToday = viewDate === todayStr()
+  const bottomBarRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!vv) return
+
+    const update = () => {
+      if (!bottomBarRef.current) return
+      const offsetFromBottom = window.innerHeight - vv.height - vv.offsetTop
+      bottomBarRef.current.style.transform = `translateY(-${offsetFromBottom}px)`
+    }
+
+    vv.addEventListener('resize', update)
+    vv.addEventListener('scroll', update)
+    return () => {
+      vv.removeEventListener('resize', update)
+      vv.removeEventListener('scroll', update)
+    }
+  }, [])
 
   useEffect(() => {
     setEntry(existingEntry ?? makeDefault(viewDate))
@@ -517,8 +536,8 @@ const DailyReflection = ({ viewDate, existingEntry, onSave, onBack }: Props) => 
       </div>
 
       {/* Bottom navigation — sits above the app Navigation bar (h-16 = 64px + safe area) */}
-      <div className="fixed left-0 right-0 px-6"
-        style={{ bottom: 'calc(64px + env(safe-area-inset-bottom, 0px))', background: 'rgba(10,8,7,0.9)', backdropFilter: 'blur(20px)', borderTop: '1px solid rgba(232,201,163,0.08)' }}
+      <div ref={bottomBarRef} className="fixed left-0 right-0 px-6"
+        style={{ bottom: 'calc(64px + env(safe-area-inset-bottom, 0px))', background: 'rgba(10,8,7,0.9)', backdropFilter: 'blur(20px)', borderTop: '1px solid rgba(232,201,163,0.08)', willChange: 'transform' }}
       >
         <div className="max-w-lg mx-auto py-4">
           {step !== 'complete' ? (
