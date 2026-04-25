@@ -59,7 +59,7 @@ const App = () => {
   }
 
   return (
-    <div className="h-dvh bg-warm-950 overflow-hidden">
+    <div className="h-screen bg-warm-950 overflow-hidden">
       {syncing && (
         <div className="fixed top-0 left-0 right-0 h-0.5 bg-terracotta animate-pulse z-50" />
       )}

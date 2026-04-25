@@ -15,7 +15,6 @@
     height: 100%;
     overflow: hidden;
     @apply bg-warm-950 text-cream antialiased;
-    padding-bottom: env(safe-area-inset-bottom);
     font-family: 'Noto Sans TC', system-ui, sans-serif;
   }
 
