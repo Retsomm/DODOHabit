@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { ViewType, DailyEntry } from './types'
 import useStorage from './hooks/useStorage'
 import useAuth from './hooks/useAuth'
@@ -23,6 +23,7 @@ const App = () => {
   const [viewingDate, setViewingDate] = useState<string>(todayStr())
   const { entries, saveEntry, getByDate, syncing } = useStorage(user?.uid)
   const { profile, saveProfile, saving } = useProfile(user?.uid)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
 
   const currentEntry = getByDate(viewingDate)
 
@@ -30,6 +31,7 @@ const App = () => {
     if (v === 'reflection') setViewingDate(todayStr())
     setView(v)
     localStorage.setItem('lastView', v)
+    scrollContainerRef.current?.scrollTo({ top: 0 })
   }, [])
 
   const handleEntryClick = useCallback((entry: DailyEntry) => {
@@ -64,7 +66,7 @@ const App = () => {
         <div className="fixed top-0 left-0 right-0 h-0.5 bg-terracotta animate-pulse z-50" />
       )}
 
-      <div className="h-full overflow-y-auto pt-safe" style={{ paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 0px))' }}>
+      <div ref={scrollContainerRef} className="h-full overflow-y-auto pt-safe" style={{ paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 0px))' }}>
         {view === 'reflection' && (
           <DailyReflection
             viewDate={viewingDate}
