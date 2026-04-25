@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react'
 import { ViewType } from '../types'
 
 interface Props {
@@ -61,29 +60,10 @@ const TAB_ICON: Record<string, (active: boolean) => React.ReactNode> = {
 
 const Navigation = ({ view, onViewChange, userEmail, photoDataUrl, photoPosition, displayName }: Props) => {
   const initial = (displayName || userEmail || 'A')[0].toUpperCase()
-  const navRef = useRef<HTMLElement>(null)
-
-  useEffect(() => {
-    const vv = window.visualViewport
-    if (!vv) return
-
-    const update = () => {
-      if (!navRef.current) return
-      const offsetFromBottom = window.innerHeight - vv.height - vv.offsetTop
-      navRef.current.style.transform = `translateY(-${offsetFromBottom}px)`
-    }
-
-    vv.addEventListener('resize', update)
-    vv.addEventListener('scroll', update)
-    return () => {
-      vv.removeEventListener('resize', update)
-      vv.removeEventListener('scroll', update)
-    }
-  }, [])
 
   return (
-    <nav ref={navRef} className="fixed bottom-0 left-0 right-0 z-50"
-      style={{ background: 'rgba(10,8,7,0.95)', borderTop: '1px solid rgba(232,201,163,0.1)', backdropFilter: 'blur(20px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)', willChange: 'transform' }}
+    <nav className="fixed bottom-0 left-0 right-0 z-50"
+      style={{ background: 'rgba(10,8,7,0.95)', borderTop: '1px solid rgba(232,201,163,0.1)', backdropFilter: 'blur(20px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       <div className="flex items-center h-16 max-w-lg mx-auto">
         {TABS.map(({ key, label }) => (
