@@ -64,7 +64,7 @@ const App = () => {
         <div className="fixed top-0 left-0 right-0 h-0.5 bg-terracotta animate-pulse z-50" />
       )}
 
-      <div className="h-full overflow-y-auto pt-safe">
+      <div className="h-full overflow-y-auto pt-safe" style={{ paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 0px))' }}>
         {view === 'reflection' && (
           <DailyReflection
             viewDate={viewingDate}
