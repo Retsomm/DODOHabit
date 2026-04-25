@@ -22,6 +22,11 @@
   textarea {
     @apply leading-relaxed;
   }
+
+  /* iOS Safari 在 font-size < 16px 的 input 觸發時會自動放大畫面，固定 16px 防止此行為 */
+  input, textarea, select {
+    font-size: 16px;
+  }
 }
 
 @layer utilities {

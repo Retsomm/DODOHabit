@@ -62,7 +62,7 @@ const Navigation = ({ view, onViewChange, userEmail, photoDataUrl, photoPosition
   const initial = (displayName || userEmail || 'A')[0].toUpperCase()
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50"
+    <nav className="shrink-0 z-50"
       style={{ background: 'rgba(10,8,7,0.95)', borderTop: '1px solid rgba(232,201,163,0.1)', backdropFilter: 'blur(20px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       <div className="flex items-center h-16 max-w-lg mx-auto">
